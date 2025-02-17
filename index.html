@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Clientes Conectados - AppBase</title>
+    <!-- Incluimos la librería de Socket.io -->
+    <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            padding: 20px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            margin: 20px auto;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: #333;
+            text-align: center;
+        }
+
+        .client {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .client:last-child {
+            border-bottom: none;
+        }
+
+        .mac {
+            font-weight: bold;
+            color: #6200EE;
+        }
+
+        .signal {
+            color: #4CAF50;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .no-clients {
+            text-align: center;
+            color: #777;
+            font-style: italic;
+            padding: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h2>Clientes Conectados</h2>
+        <div id="clientsContainer" aria-live="polite">
+            <p class="no-clients">No hay clientes conectados</p>
+        </div>
+    </div>
+
+    <script>
+        // Conectar al servidor Socket.io (ajusta la URL según la IP de la Raspberry Pi)
+        const socket = io('http://192.168.4.1:3000');
+
+        // Función para renderizar la lista de clientes
+        function renderClients(clients) {
+            const container = document.getElementById('clientsContainer');
+            container.innerHTML = ''; // Limpiar contenido previo
+
+            if (clients && clients.length > 0) {
+                clients.forEach(client => {
+                    const clientDiv = document.createElement('div');
+                    clientDiv.className = 'client';
+                    clientDiv.innerHTML = `
+                        <span class="mac">MAC: ${client.mac}</span>
+                        <span class="signal">Señal: ${client.signal} dBm</span>
+                    `;
+                    container.appendChild(clientDiv);
+                });
+            } else {
+                container.innerHTML = '<p class="no-clients">No hay clientes conectados</p>';
+            }
+        }
+
+        // Escuchar el evento de actualización de clientes
+        socket.on('clients-update', (data) => {
+            console.log('Actualización de clientes conectados:', data.clients);
+            renderClients(data.clients);
+        });
+
+        // Verificar la conexión con el servidor
+        socket.on('connect', () => {
+            console.log('Conectado al servidor de Socket.io');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Desconectado del servidor de Socket.io');
+        });
+    </script>
+</body>
+
+</html>
